@@ -27,7 +27,7 @@ import mlflow
 from urllib.parse import urlparse
 
 import dagshub
-#dagshub.init(repo_owner='krishnaik06', repo_name='networksecurity', mlflow=True)
+dagshub.init(repo_owner='Codage-isThe-8thWonder', repo_name='Network_Security_System', mlflow=True)
 
 os.environ["MLFLOW_TRACKING_URI"]="https://dagshub.com/krishnaik06/networksecurity.mlflow"
 os.environ["MLFLOW_TRACKING_USERNAME"]="krishnaik06"
@@ -118,6 +118,7 @@ class ModelTrainer:
         best_model_name = list(model_report.keys())[
             list(model_report.values()).index(best_model_score)
         ]
+        
         best_model = models[best_model_name]
         y_train_pred=best_model.predict(X_train)
 
@@ -139,6 +140,8 @@ class ModelTrainer:
 
         Network_Model=NetworkModel(preprocessor=preprocessor,model=best_model)
         save_object(self.model_trainer_config.trained_model_file_path,obj=NetworkModel)
+
+
         #model pusher
         save_object("final_model/model.pkl",best_model)
         
