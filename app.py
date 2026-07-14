@@ -7,7 +7,7 @@ ca = certifi.where()
 from dotenv import load_dotenv
 load_dotenv()
 mongo_db_url = os.getenv("MONGODB_URL_KEY")
-print(mongo_db_url)
+
 import pymongo
 from networksecurity.exception.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
@@ -68,9 +68,9 @@ async def predict_route(request: Request,file: UploadFile = File(...)):
         preprocesor=load_object("final_model/preprocessor.pkl")
         final_model=load_object("final_model/model.pkl")
         network_model = NetworkModel(preprocessor=preprocesor,model=final_model)
-        print(df.iloc[0])
+        
         y_pred = network_model.predict(df)
-        print(y_pred)
+    
         df['predicted_column'] = y_pred
         print(df['predicted_column'])
         #df['predicted_column'].replace(-1, 0)
@@ -85,4 +85,8 @@ async def predict_route(request: Request,file: UploadFile = File(...)):
 
     
 if __name__=="__main__":
-    app_run(app,host="0.0.0.0",port=8000)
+    app_run(
+        app,
+        host="0.0.0.0",
+        port=int(os.getenv("PORT",8000))
+    )

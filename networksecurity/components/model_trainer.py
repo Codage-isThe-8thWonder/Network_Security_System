@@ -23,17 +23,24 @@ from sklearn.ensemble import (
     GradientBoostingClassifier,
     RandomForestClassifier,
 )
-import mlflow
+
 from urllib.parse import urlparse
-
+from dotenv import load_dotenv
 import dagshub
-dagshub.init(repo_owner='Codage-isThe-8thWonder', repo_name='Network_Security_System', mlflow=True)
+import mlflow
+import os
 
-os.environ["MLFLOW_TRACKING_URI"]="https://dagshub.com/krishnaik06/networksecurity.mlflow"
-os.environ["MLFLOW_TRACKING_USERNAME"]="krishnaik06"
-os.environ["MLFLOW_TRACKING_PASSWORD"]="7104284f1bb44ece21e0e2adb4e36a250ae3251f"
+load_dotenv()
 
+dagshub.init(
+    repo_owner=os.getenv("DAGSHUB_REPO_OWNER"),
+    repo_name=os.getenv("DAGSHUB_REPO_NAME"),
+    mlflow=True
+)
 
+os.environ["MLFLOW_TRACKING_URI"] = os.getenv("MLFLOW_TRACKING_URI")
+os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("MLFLOW_TRACKING_USERNAME")
+os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("MLFLOW_TRACKING_PASSWORD")
 
 
 
@@ -45,30 +52,99 @@ class ModelTrainer:
         except Exception as e:
             raise NetworkSecurityException(e,sys)
         
-    def track_mlflow(self,best_model,classificationmetric):
-        mlflow.set_registry_uri("https://dagshub.com/krishnaik06/networksecurity.mlflow")
-        tracking_url_type_store = urlparse(mlflow.get_tracking_uri()).scheme
-        with mlflow.start_run():
-            f1_score=classificationmetric.f1_score
-            precision_score=classificationmetric.precision_score
-            recall_score=classificationmetric.recall_score
+    def track_mlflow(self,model_name,model,train_metric,test_metric):
+            mlflow.set_tracking_uri(
+                os.getenv("MLFLOW_TRACKING_URI")
+            )
 
-            
+            mlflow.set_registry_uri(
+                os.getenv("MLFLOW_TRACKING_URI")
+            )
 
-            mlflow.log_metric("f1_score",f1_score)
-            mlflow.log_metric("precision",precision_score)
-            mlflow.log_metric("recall_score",recall_score)
-            mlflow.sklearn.log_model(best_model,"model")
-            # Model registry does not work with file store
-            if tracking_url_type_store != "file":
+            tracking_url_type_store = urlparse(
+                mlflow.get_tracking_uri()
+            ).scheme
 
-                # Register the model
-                # There are other ways to use the Model Registry, which depends on the use case,
-                # please refer to the doc for more information:
-                # https://mlflow.org/docs/latest/model-registry.html#api-workflow
-                mlflow.sklearn.log_model(best_model, "model", registered_model_name=best_model)
-            else:
-                mlflow.sklearn.log_model(best_model, "model")
+            with mlflow.start_run(run_name=model_name):
+
+                #############################################
+                # Log Parameters
+                #############################################
+
+                mlflow.log_params(model.get_params())
+
+                #############################################
+                # Train Metrics
+                #############################################
+
+                mlflow.log_metric(
+                    "train_f1_score",
+                    train_metric.f1_score
+                )
+
+                mlflow.log_metric(
+                    "train_precision",
+                    train_metric.precision_score
+                )
+
+                mlflow.log_metric(
+                    "train_recall",
+                    train_metric.recall_score
+                )
+
+                #############################################
+                # Test Metrics
+                #############################################
+
+                mlflow.log_metric(
+                    "test_f1_score",
+                    test_metric.f1_score
+                )
+
+                mlflow.log_metric(
+                    "test_precision",
+                    test_metric.precision_score
+                )
+
+                mlflow.log_metric(
+                    "test_recall",
+                    test_metric.recall_score
+                )
+
+                #############################################
+                # Log Artifacts
+                #############################################
+
+                mlflow.log_artifact(
+                    self.data_transformation_artifact.transformed_object_file_path
+                )
+
+                #############################################
+                # Register Model
+                #############################################
+
+                if tracking_url_type_store != "file":
+
+                    mlflow.sklearn.log_model(
+
+                        sk_model=model,
+
+                        artifact_path="model",
+
+                        registered_model_name="NetworkSecurityModel"
+
+                    )
+
+                else:
+
+                    mlflow.sklearn.log_model(
+
+                        sk_model=model,
+
+                        artifact_path="model"
+
+                    )
+
 
 
         
@@ -107,6 +183,7 @@ class ModelTrainer:
             }
             
         }
+
         model_report:dict=evaluate_models(X_train=X_train,y_train=y_train,X_test=x_test,y_test=y_test,
                                           models=models,param=params)
         
@@ -118,20 +195,23 @@ class ModelTrainer:
         best_model_name = list(model_report.keys())[
             list(model_report.values()).index(best_model_score)
         ]
-        
+
         best_model = models[best_model_name]
         y_train_pred=best_model.predict(X_train)
 
         classification_train_metric=get_classification_score(y_true=y_train,y_pred=y_train_pred)
-        
-        ## Track the experiements with mlflow
-        self.track_mlflow(best_model,classification_train_metric)
 
 
         y_test_pred=best_model.predict(x_test)
         classification_test_metric=get_classification_score(y_true=y_test,y_pred=y_test_pred)
 
-        self.track_mlflow(best_model,classification_test_metric)
+        ## Track the experiements with mlflow
+        self.track_mlflow(
+            model_name=best_model_name,
+            model=best_model,
+            train_metric=classification_train_metric,
+            test_metric=classification_test_metric
+        )
 
         preprocessor = load_object(file_path=self.data_transformation_artifact.transformed_object_file_path)
             
@@ -139,7 +219,7 @@ class ModelTrainer:
         os.makedirs(model_dir_path,exist_ok=True)
 
         Network_Model=NetworkModel(preprocessor=preprocessor,model=best_model)
-        save_object(self.model_trainer_config.trained_model_file_path,obj=NetworkModel)
+        save_object(self.model_trainer_config.trained_model_file_path,obj=Network_Model)
 
 
         #model pusher
@@ -152,15 +232,15 @@ class ModelTrainer:
                              test_metric_artifact=classification_test_metric
                              )
         logging.info(f"Model trainer artifact: {model_trainer_artifact}")
+        logging.info(f"Best Model : {best_model_name}")
+        logging.info(f"Best Score : {best_model_score}")
+
         return model_trainer_artifact
 
 
         
 
 
-       
-    
-    
         
     def initiate_model_trainer(self)->ModelTrainerArtifact:
         try:
