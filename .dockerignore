@@ -1,90 +1,22 @@
-# -------------------------
-# Python Cache
-# -------------------------
-__pycache__/
-*.py[cod]
-*$py.class
-
-# -------------------------
-# Virtual Environment
-# -------------------------
 venv/
-.venv/
-env/
-ENV/
-
-# -------------------------
-# Git
-# -------------------------
-.git/
-.gitignore
-
-# -------------------------
-# IDE Files
-# -------------------------
-.vscode/
-.idea/
-*.swp
-
-# -------------------------
-# OS Files
-# -------------------------
-.DS_Store
-Thumbs.db
-
-# -------------------------
-# Python Build Files
-# -------------------------
-build/
-dist/
-*.egg-info/
-
-# -------------------------
-# Logs
-# -------------------------
-logs/
-*.log
-
-# -------------------------
-# Pytest / Coverage
-# -------------------------
-.pytest_cache/
-.coverage
-htmlcov/
-
-# -------------------------
-# Jupyter
-# -------------------------
+__pycache__/
+*.pyc
 .ipynb_checkpoints/
 
-# -------------------------
-# Environment Files
-# -------------------------
-.env
-.env.*
+.git
+.gitignore
 
-# -------------------------
-# MLflow Local Runs
-# -------------------------
+artifacts/
+logs/
 mlruns/
 
-# -------------------------
-# Temporary Artifacts
-# -------------------------
-artifact/
+.idea/
+.vscode/
 
-# -------------------------
-# Prediction Output
-# -------------------------
-prediction_output/
+.env
 
-# -------------------------
-# Temporary Numpy Files
-# -------------------------
-*.npy
+*.db
 
-# -------------------------
-# Documentation
-# -------------------------
-README.md
-LICENSE
+notebooks/
+
+tests/

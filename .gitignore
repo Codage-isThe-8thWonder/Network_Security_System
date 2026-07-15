@@ -1,2 +1,10 @@
-venv
+venv/
+__pycache__/
+.git/
+
+logs/
+artifacts/
+mlruns/
+prediction_output/
+
 .env

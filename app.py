@@ -6,7 +6,7 @@ ca = certifi.where()
 
 from dotenv import load_dotenv
 load_dotenv()
-mongo_db_url = os.getenv("MONGODB_URL_KEY")
+mongo_db_url = os.getenv("MONGODB_DB_URL")
 
 import pymongo
 from networksecurity.exception.exception import NetworkSecurityException
@@ -45,7 +45,7 @@ app.add_middleware(
 )
 
 from fastapi.templating import Jinja2Templates
-templates = Jinja2Templates(directory="./templates")
+templates = Jinja2Templates(directory="templates")
 
 @app.get("/", tags=["authentication"])
 async def index():
@@ -72,13 +72,23 @@ async def predict_route(request: Request,file: UploadFile = File(...)):
         y_pred = network_model.predict(df)
     
         df['predicted_column'] = y_pred
-        print(df['predicted_column'])
+        logging.info(df["predicted_column"].value_counts())
         #df['predicted_column'].replace(-1, 0)
         #return df.to_json()
-        df.to_csv('prediction_output/output.csv')
+
+        os.makedirs("prediction_output", exist_ok=True)
+
+        df.to_csv("prediction_output/output.csv", index=False)
+
         table_html = df.to_html(classes='table table-striped')
         #print(table_html)
-        return templates.TemplateResponse("table.html", {"request": request, "table": table_html})
+        return templates.TemplateResponse(
+                request=request,
+                name="table.html",
+                context={
+                    "table": table_html
+                }
+            )
         
     except Exception as e:
             raise NetworkSecurityException(e,sys)
