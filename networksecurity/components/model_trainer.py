@@ -32,11 +32,22 @@ import os
 
 load_dotenv()
 
+dagshub.auth.add_app_token(os.getenv("DAGSHUB_TOKEN")) # Created problem while running docker container
+
 dagshub.init(
     repo_owner=os.getenv("DAGSHUB_REPO_OWNER"),
     repo_name=os.getenv("DAGSHUB_REPO_NAME"),
     mlflow=True
 )
+
+# import dagshub
+# import dagshub.auth
+# print(dir(dagshub.auth))
+# import dagshub
+# import os
+# print(dagshub.auth.get_token())
+# Check dagshub account app token while dockerizing, DAGSHUB_TOKEN=ac632a9d8a10176db423529066b9f8d4560123c8 print(dagshub.auth.get_token())
+# Dhyan: Ye get_token() wala token use karo. MLFLOW_TRACKING_PASSWORD wala zaroori nahi ki DagsHub auth ke liye use ho.
 
 os.environ["MLFLOW_TRACKING_URI"] = os.getenv("MLFLOW_TRACKING_URI")
 os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("MLFLOW_TRACKING_USERNAME")
